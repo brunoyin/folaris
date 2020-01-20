@@ -3,7 +3,7 @@
 
 Folaris is a simple web app with an embedded Powershell and functions just like WinRM without Windows integreted authentication. It allows you to run it on any servers where you can host a dotnet core app.
 
-It's experimental, is not for use in production. I recommend running in Docker first.
+It's experimental, not for use in production. I recommend running in Docker first.
 
 Inspired by [Polaris: A cross-platform, minimalist web framework for PowerShell](https://github.com/PowerShell/Polaris) and Powershell WinRM remote execution using Invoke-Command.
 
@@ -22,9 +22,10 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 * Folaris web app has an embedded Powershell that execute Powershell cmdlets as well as shell commands available on the hosting server
 * Powershell output is a dotnet object or PSDataCollection<PSObject> and Folaris serialize it and send it to client, the client uses the same to deserialize.
 
-### Warning: Folaris is not safe, accidental unsafe or malicious commands 
+### Warning: Folaris is not safe
 
-* This is a proof of concept. The code here can be used as a backdoor which is clearly not my intention.
+* This is a proof of concept
+* It execute any commands without authentication
 * Run it in Docker with read-only volume mounting option
 
 ### Build/Publish as platform dependent to be used with a dotnet runtime Docker image
@@ -70,9 +71,9 @@ $ret = Invoke-RestMethod -Uri http://localhost:8080/run -Method Post -Body $payl
 curl.exe -F 'file=@.\README.md' http://localhost:8080/upload
 ```
 
-## Create a Powershell or Powershell Core cmdlet
+## Testing with folarisCli Powershell module
 
-* Create a Powershell function to automate remote command execution similar to Invoke-Command -ComputerName hostname -ScriptBlock { gci env: }
+* This module provides a Powershell cmdlet similar to Invoke-Command. For example, Invoke-Command -ComputerName hostname -ScriptBlock { gci env: }
 
 ```powershell
 # currently folarisCli has 2 functions to simplify executing the a remote command
