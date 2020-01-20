@@ -33,7 +33,7 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 * dotnet core sdk 3.1 required
 * clone this repo
 * run: dotnet run
-* use folarusCli Powershell module to see it in action
+* use folarisCli Powershell module to see it in action
 
 ### Build/Publish as platform dependent to be used with a dotnet runtime Docker image
 
