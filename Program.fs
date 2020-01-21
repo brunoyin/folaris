@@ -126,14 +126,20 @@ let executeCmd (cmd: PwshCommand) =
     } |> Async.Catch
    
 // safe size to 3K, reject long script size
-let isSafeSize ( ctx: HttpContext) =
+let isSafe ( ctx: HttpContext) =
     let inner ( ctx:HttpContext) = 
         async {
             // let contextType = Headers.getFirstHeader "content-length" ctx
             let result = 
                 if ctx.request.rawForm.Length < 3072 then
-                    Some(ctx)
+                    try
+                        let testJson = JsonConvert.DeserializeObject(ctx.request.rawForm|>getString, typeof<PwshCommand>) :?> PwshCommand
+                        // store it for the next webpart
+                        {ctx with userState = ctx.userState.Add("cmd", box testJson)} |> Some
+                    with
+                    | ex -> None //INTERNAL_ERROR ex.Message ctx |>ignore; None
                 else
+                    // INTERNAL_ERROR "Data too long" ctx |>ignore
                     None
             return result
         }
@@ -141,12 +147,10 @@ let isSafeSize ( ctx: HttpContext) =
 
 // run cmd
 let runPwsh =
-    request (fun r ->
+    context (fun ctx ->
         let t1 = DateTime.Now
         let result =
-            r.rawForm
-            |> getString
-            |> fromJson<PwshCommand>
+            (unbox<PwshCommand> ctx.userState.["cmd"]) 
             |> executeCmd |> Async.RunSynchronously
         (match result with
         | Choice1Of2 psReturn -> psReturn
@@ -168,6 +172,10 @@ let upload =
     )
     >=> setMimeType "text/plain"
 
+let customErrorHandler ex msg ctx =
+    // to-do: improve this
+    INTERNAL_ERROR ("Error: " + msg) ctx
+
 //setup app routes
 let app =
     choose
@@ -175,7 +183,7 @@ let app =
             [ path "/" >=> OK ( sprintf "Welcome to Folaris: %s!" folarisVersion) ]
 
           POST >=> choose
-            [ path "/run" >=> warbler isSafeSize >=> runPwsh ]
+            [ path "/run" >=> warbler isSafe >=> runPwsh ]
 
           POST >=> choose
             [ path "/upload" >=> upload ]
@@ -210,6 +218,7 @@ let main argv =
           bindings = [local];
           maxContentLength=2*1024*1024; // limit the size to 2 MB
           //logger = logger;
+          errorHandler = customErrorHandler;
       }
     // let logger = Suave.Logging.Logger. Logging.LogLevel.Error
     startWebServer webConfig app //(withTracing logger app)
