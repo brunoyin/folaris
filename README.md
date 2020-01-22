@@ -11,7 +11,7 @@ Because it's written in F#, I named it Folaris after Polaris.
 
 Folaris is based on [SUAVE: a simple web development F# library](https://github.com/SuaveIO/suave) with an embedded Powershell.
 
-## features
+## Features
 
 * Run shell and Powershell commands on a hosting server via HTTP similar to WinRM without the integreted authentication.
 * Works on any servers where a dotnet core app can run. That means Windows, Linux, MacOS.
@@ -29,7 +29,7 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 * It executes any commands without authentication
 * Run it in Docker with read-only volume mounting option
 
-## running from the source
+## Running from the source
 
 * dotnet core sdk 3.1 required
 * clone this repo
