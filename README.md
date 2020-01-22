@@ -1,7 +1,7 @@
 ﻿
 ## Folaris
 
-Folaris is a simple web app with an embedded Powershell and functions just like WinRM without Windows integreted authentication. It allows you to run it on any servers where you can host a dotnet core app.
+Folaris is a simple web app with an embedded Powershell and functions just like WinRM without Windows integrated authentication. It allows you to run it on any servers where you can host a dotnet core app.
 
 It's experimental, not for use in production. I recommend running in Docker first.
 
@@ -13,7 +13,7 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 
 ## Features
 
-* Run shell and Powershell commands on a hosting server via HTTP similar to WinRM without the integreted authentication.
+* Run shell and Powershell commands on a hosting server via HTTP similar to WinRM without the integrated authentication.
 * Works on any servers where a dotnet core app can run. That means Windows, Linux, MacOS.
 * The POST must be in correct JSON format, the JSON payload must be less than 3KB.
 * Upload files to the hosting server
@@ -134,6 +134,7 @@ f -cmd 'get-date' -run_url http://192.168.1.250:8080/run
 
 More details in [folaris-tests.ps1 ](folaris-tests.ps1)
 
+### to-do: add some type of authentication
 
 ### Thanks to
 
