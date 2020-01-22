@@ -222,9 +222,10 @@ let main argv =
     
     async {
         runSpacePool.Open()
-        do! Async.Sleep 3000
-        logger.info (eventX "getting started")
-        printfn "Folaris Version %s started: upload directory is %s" folarisVersion uploadDir
+        do! Async.Sleep 1000
+        logger.info (eventX "Ready to serve!")
+        printfn "\n===============\nFolaris Version %s started, listening on port:  %i\n===============\n" folarisVersion port
+        printfn "upload directory: %s\n" uploadDir
       } |> Async.Start
 
     startWebServer webConfig app // (withTracing logger app)

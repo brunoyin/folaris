@@ -5,7 +5,7 @@ This a Powershell module that wraps Folaris remote execution calls.
 
 ## How it works
 
-Folaris web server expose /run HTTP POST for executing a Powershell script or a simple commnand. The server requires the command to be formatted in JSON.
+Folaris web server expose /run HTTP POST for executing a Powershell script or a simple commnand. The server requires the command to be formatted in JSON. If the payload json text is longer than 3K, or it is not in the expected format, connection will drop immediately.
 
 For example, to execute cmdlet Get-Date, it expects in the HTTP POST payload to be:
 

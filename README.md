@@ -14,18 +14,19 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 ## features
 
 * Run shell and Powershell commands on a hosting server via HTTP similar to WinRM without the integreted authentication.
-* Works on any servers where a dotnet core app can run.
+* Works on any servers where a dotnet core app can run. That means Windows, Linux, MacOS.
+* The POST must be in correct JSON format, the JSON payload must be less than 3KB.
 * Upload files to the hosting server
 
 ## How it works
 
-* Folaris web app has an embedded Powershell that execute Powershell cmdlets as well as shell commands available on the hosting server
+* Folaris web app has an embedded Powershell that executes Powershell cmdlets as well as shell commands available on the hosting server
 * Powershell output is a dotnet object or PSDataCollection<PSObject> and Folaris serialize it and send it to client, the client uses the same to deserialize.
 
 ### Warning: Folaris is not safe
 
 * This is a proof of concept
-* It execute any commands without authentication
+* It executes any commands without authentication
 * Run it in Docker with read-only volume mounting option
 
 ## running from the source
@@ -34,6 +35,14 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 * clone this repo
 * run: dotnet run
 * use folarisCli Powershell module to see it in action
+```powershell
+# use the default 8080
+dotnet run
+# use a different port
+$env:FOLARIS_PORT = '8087'
+# or in Bash: export FOLARIS_PORT='8087'
+dotnet run
+```
 
 ### Build/Publish as platform dependent to be used with a dotnet runtime Docker image
 
@@ -59,9 +68,22 @@ docker run -ti --rm \
 	-e DOTNET_CLI_TELEMETRY_OPTOUT=1 \
 	mcr.microsoft.com/dotnet/core/runtime:3.1 \
 	dotnet folaris.dll
+
+# To run on different port, use FOLARIS_PORT variable to set the your port
+# Of cause docker can map to any different port. But if you have another container already using port 8080 internally
+# you can do something like:
+export FOLARIS_PORT='8087'
+docker run -ti --rm \
+	-p $FOLARIS_PORT:$FOLARIS_PORT \
+	-v $PWD/build:/folaris:ro \
+	-w /folaris \
+	-e DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+	-e FOLARIS_PORT=$FOLARIS_PORT \
+	mcr.microsoft.com/dotnet/core/runtime:3.1 \
+	dotnet folaris.dll
 ```
 
-### defined HTTP routes
+### Defined HTTP routes
 
 * GET / 
 * POST /run
@@ -92,26 +114,26 @@ help -full  f
 help -full Check-Folaris
 help -full folaris
 ```
-* Run a command
+* See it in action
 
 ```powershell
+# Invoke-RemotePwsh take an optiona run_url parameter, it defaults to http://localhost:8080/run
 # example using pipeline: list files/direcories showing only short names
 'gci . |select -exp Name' | Invoke-RemotePwsh
 # example using parameter: Get-Date
 Invoke-RemotePwsh -cmd 'get-date'
-# example using parameter on a different computer, default is localhost
-Invoke-RemotePwsh -cmd 'get-date' -run_url http://192.168.1.250/run
+# example using run_url parameter on a different computer, default is localhost
+Invoke-RemotePwsh -cmd 'get-date' -run_url http://192.168.1.250:8080/run
 # or 
-f -cmd 'get-date' -run_url http://192.168.1.250/run
+f -cmd 'get-date' -run_url http://192.168.1.250:8080/run
 # or
-'get-date' |f -run_url http://192.168.1.250/run
-# Let produce and error: assume dude is not a valid command
-'Get-Command dude' |f -run_url http://192.168.1.250/run
+'get-date' |f -run_url http://192.168.1.250:8080/run
+# Let's produce and error: assume dude is not a valid command
+'Get-Command dude' |f -run_url http://192.168.1.250:8080/run
 ```
 
 More details in [folaris-tests.ps1 ](folaris-tests.ps1)
 
-## To-do: get logging to work
 
 ### Thanks to
 
