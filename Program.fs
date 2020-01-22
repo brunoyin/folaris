@@ -51,6 +51,10 @@ let GetEnvVar varName defaultValue =
 
 let logger = Logary.Log.create "Folaris"
 
+// set password
+let folarisUsername = GetEnvVar "FOLARIS_USER" "folaris"
+let folarisPasswd = GetEnvVar "FOLARIS_PASSWD" "folaris"
+
 // setting up upload directory
 let uploadDir = GetEnvVar "FOLARIS_UPLOAD" (Path.Combine(Environment.CurrentDirectory, "folaris_upload" ))
 if  not ( Directory.Exists(uploadDir)) then Directory.CreateDirectory(uploadDir) |> ignore
@@ -182,12 +186,16 @@ let app =
         [ GET >=> choose
             [ path "/" >=> OK ( sprintf "Welcome to Folaris: %s!" folarisVersion) ]
 
-          isSafe >=>
-          POST >=> choose
-            [ path "/run" >=>  runPwsh ]
+          Authentication.authenticateBasic 
+              (fun (user,pwd) -> user = folarisUsername && pwd = folarisPasswd) 
+              (choose [
+                  isSafe >=>
+                  POST >=> choose
+                    [ path "/run" >=>  runPwsh ]
 
-          POST >=> choose
-            [ path "/upload" >=> upload ]
+                  POST >=> choose
+                    [ path "/upload" >=> upload ]
+              ])
 
           RequestErrors.NOT_FOUND "Found no handlers."
         ]

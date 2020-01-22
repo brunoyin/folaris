@@ -20,10 +20,17 @@ Function Invoke-RemotePwsh {
 		[parameter(
         Mandatory = $true, ValueFromPipeline = $true)]
 		[string]$cmd,
+		[string]$username='folaris',
+		[string]$password='folaris',
 		[string]$run_url = 'http://localhost:8080/run'
 	)
+	# encode password
+	$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $username,$password)))
+	$authHeader = @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+	# 
 	$payload = @{cmd = $cmd }|ConvertTo-Json
-	$result = Invoke-RestMethod -Uri $run_url -Method Post -Body $payload
+	# call with Basic Authentication
+	$result = Invoke-RestMethod -Headers $authHeader -Uri $run_url -Method Post -Body $payload
 
 	if ($result.status){
 		if ( $result.output.'$values'.clixml -is [array] ){

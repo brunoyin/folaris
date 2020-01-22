@@ -36,13 +36,15 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 * run: dotnet run
 * use folarisCli Powershell module to see it in action
 ```powershell
-# use the default 8080
+# use the default 8080, user/password = folaris/folaris
 dotnet run
 
 
-# To use a different port
+# To use a different port or user/password
 $env:FOLARIS_PORT = '8087'
-# or in Bash: export FOLARIS_PORT='8087'
+$env:FOLARIS_USER = 'bruno'
+$env:FOLARIS_PASSWD = 'very-secret'
+# or in Bash: export FOLARIS_PORT='8087' FOLARIS_USER='bruno' FOLARIS_PASSWD='very-secret'
 dotnet run
 ```
 
@@ -68,6 +70,8 @@ docker run -ti --rm \
 	-v $PWD/build:/folaris:ro \
 	-w /folaris \
 	-e DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+	-e FOLARIS_USER=folaris \
+	-e FOLARIS_PASSWD=folaris \
 	mcr.microsoft.com/dotnet/core/runtime:3.1 \
 	dotnet folaris.dll
 
@@ -81,6 +85,8 @@ docker run -ti --rm \
 	-w /folaris \
 	-e DOTNET_CLI_TELEMETRY_OPTOUT=1 \
 	-e FOLARIS_PORT=$FOLARIS_PORT \
+	-e FOLARIS_USER=folaris \
+	-e FOLARIS_PASSWD=folaris \
 	mcr.microsoft.com/dotnet/core/runtime:3.1 \
 	dotnet folaris.dll
 ```
