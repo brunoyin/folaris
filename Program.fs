@@ -9,13 +9,13 @@ open Suave.Successful
 open Suave.ServerErrors
 open Suave.Writers
 //
-//open Hopac
-//open Logary
-//open Logary.Message
-//open Logary.Targets
-//open Logary.Adapters.Facade
-//open Logary.Configuration
-//open Logary.Prometheus.Exporter
+open Hopac
+open Logary
+open Logary.Message
+open Logary.Targets
+open Logary.Adapters.Facade
+open Logary.Configuration
+// open Logary.Prometheus.Exporter
 //
 open Newtonsoft.Json
 open Newtonsoft.Json.Converters
@@ -48,6 +48,8 @@ let GetEnvVar varName defaultValue =
     match Environment.GetEnvironmentVariable(varName) with
     | null -> defaultValue
     | value -> value
+
+let logger = Logary.Log.create "Folaris"
 
 // setting up upload directory
 let uploadDir = GetEnvVar "FOLARIS_UPLOAD" (Path.Combine(Environment.CurrentDirectory, "folaris_upload" ))
@@ -112,6 +114,7 @@ let fromPSobject (psObject: PSObject): string =
 let executeCmd (cmd: PwshCommand) =
     async{
         let t1 = DateTime.Now
+        logger.info(eventX (sprintf "Started executing: %s " cmd.cmd) )
         use pwsh = PowerShell.Create()
         pwsh.RunspacePool <- runSpacePool
         // Run powershll command, expecting a command or script: Invoke-Expression [-Command] <String>
@@ -121,29 +124,26 @@ let executeCmd (cmd: PwshCommand) =
             if ret.Count > 0 then seq{ 0 .. (ret.Count - 1) } |>Seq.map (fun x -> ret.[x] |> fromPSobject)|> String.concat "\n"
             else "{}"
         // concatenate output object/string with new line
+        logger.info(eventX (sprintf "Done executing: %s " cmd.cmd) )
         let ts = (DateTime.Now - t1).TotalSeconds
         return { cmd = cmd.cmd; output=ret; outstring=outString; status=true; timeUsed=ts; timeBegin = t1; }
     } |> Async.Catch
    
-// safe size to 3K, reject long script size
-let isSafe ( ctx: HttpContext) =
-    let inner ( ctx:HttpContext) = 
-        async {
-            // let contextType = Headers.getFirstHeader "content-length" ctx
-            let result = 
-                if ctx.request.rawForm.Length < 3072 then
-                    try
-                        let testJson = JsonConvert.DeserializeObject(ctx.request.rawForm|>getString, typeof<PwshCommand>) :?> PwshCommand
-                        // store it for the next webpart
-                        {ctx with userState = ctx.userState.Add("cmd", box testJson)} |> Some
-                    with
-                    | ex -> None //INTERNAL_ERROR ex.Message ctx |>ignore; None
-                else
-                    // INTERNAL_ERROR "Data too long" ctx |>ignore
-                    None
-            return result
-        }
-    inner
+// safe size up to 3K, reject long script size and must match type PwshCommand
+let isSafe = request (fun r ctx ->
+        if r.rawForm.Length < 3072 then
+            let jsonText = ctx.request.rawForm|>getString
+            try
+                let testJson = JsonConvert.DeserializeObject(jsonText, typeof<PwshCommand>) :?> PwshCommand
+                async.Return( {ctx with userState = ctx.userState.Add("cmd", box testJson)} |> Some )
+            with
+            | ex -> 
+                logger.info(eventX (sprintf "Invalid json: %s from %s" jsonText r.path) )
+                async.Return(None)
+        else
+            logger.info(eventX (sprintf "Script too long: %i, limit is 3072,  from %s" r.rawForm.Length r.path) )
+            async.Return(None)
+    )
 
 // run cmd
 let runPwsh =
@@ -182,44 +182,50 @@ let app =
         [ GET >=> choose
             [ path "/" >=> OK ( sprintf "Welcome to Folaris: %s!" folarisVersion) ]
 
+          isSafe >=>
           POST >=> choose
-            [ path "/run" >=> warbler isSafe >=> runPwsh ]
+            [ path "/run" >=>  runPwsh ]
 
           POST >=> choose
             [ path "/upload" >=> upload ]
+
+          RequestErrors.NOT_FOUND "Found no handlers."
         ]
 
 [<EntryPoint>]
 let main argv =
-    async {
-        do! Async.Sleep 3000
-        printfn "Folaris Version %s started: upload directory is %s" folarisVersion uploadDir
-      } |> Async.Start
-    runSpacePool.Open()
-    let local = Suave.Http.HttpBinding.createSimple HTTP "0.0.0.0" 8080 // listen on all net interfaces
+    let port: int = GetEnvVar "FOLARIS_PORT" "8080" |> int
+    let local = Suave.Http.HttpBinding.createSimple HTTP "0.0.0.0" port // listen on all net interfaces
     // to-do: this does not work
     //init logger
-    //let logary =
-    //    Config.create "Folaris" "0.0.0.0"
-    //    |> Config.ilogger (ILogger.LiterateConsole Verbose)
-    //    |> Config.targets [
-    //      LiterateConsole.create LiterateConsole.empty "console"
-    //      // Jaeger.create { Jaeger.empty with jaegerPort = 30831us } "jaeger"
-    //    ]
-    //    |> Config.build
-    //    |> run
+    let logary =
+        Config.create "Folaris" "0.0.0.0"
+        |> Config.ilogger (ILogger.LiterateConsole Verbose)
+        |> Config.targets [
+          LiterateConsole.create LiterateConsole.empty "console"
+          // Jaeger.create { Jaeger.empty with jaegerPort = 30831us } "jaeger"
+        ]
+        |> Config.build
+        |> run
     
-    //LogaryFacadeAdapter.initialise<Suave.Logging.Logger> logary
+    LogaryFacadeAdapter.initialise<Suave.Logging.Logger> logary
     
     // let logger = Logary.Log.create "Folaris"
     
     let webConfig =
       { defaultConfig with
-          bindings = [local];
-          maxContentLength=2*1024*1024; // limit the size to 2 MB
-          //logger = logger;
-          errorHandler = customErrorHandler;
+          bindings = [local]
+          maxContentLength=2*1024*1024 // limit the size to 2 MB
+          logger = LoggerAdapter.createGeneric logger 
+          errorHandler = customErrorHandler
       }
-    // let logger = Suave.Logging.Logger. Logging.LogLevel.Error
-    startWebServer webConfig app //(withTracing logger app)
+    
+    async {
+        runSpacePool.Open()
+        do! Async.Sleep 3000
+        logger.info (eventX "getting started")
+        printfn "Folaris Version %s started: upload directory is %s" folarisVersion uploadDir
+      } |> Async.Start
+
+    startWebServer webConfig app // (withTracing logger app)
     0
