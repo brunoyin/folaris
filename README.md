@@ -3,7 +3,7 @@
 
 Folaris is a simple web app with an embedded Powershell and functions just like WinRM without Windows integrated authentication. It allows you to run it on any servers where you can host a dotnet core app.
 
-It's experimental, not for use in production. I recommend running in Docker first.
+It's experimental, not for use in production. I recommend running it in Docker first.
 
 Inspired by [Polaris: A cross-platform, minimalist web framework for PowerShell](https://github.com/PowerShell/Polaris) and Powershell WinRM remote execution using Invoke-Command.
 
@@ -15,7 +15,7 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 
 * Run shell and Powershell commands on a hosting server via HTTP similar to WinRM without the integrated authentication.
 * Works on any servers where a dotnet core app can run. That means Windows, Linux, MacOS.
-* The POST must be in correct JSON format, the JSON payload must be less than 3KB.
+* The payload of an POST must be in correct JSON format, and less than 3KB. Here is an example: {"cmd":"Get-Date"}
 * Upload files to the hosting server
 
 ## How it works
@@ -38,7 +38,9 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 ```powershell
 # use the default 8080
 dotnet run
-# use a different port
+
+
+# To use a different port
 $env:FOLARIS_PORT = '8087'
 # or in Bash: export FOLARIS_PORT='8087'
 dotnet run
