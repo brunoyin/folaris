@@ -125,7 +125,24 @@ help -full folaris
 * See it in action
 
 ```powershell
-# Invoke-RemotePwsh take an optiona run_url parameter, it defaults to http://localhost:8080/run
+<# 
+Invoke-RemotePwsh
+
+SYNTAX
+    Invoke-RemotePwsh [-cmd] <String> [[-username] <String>] [[-password] <String>] [[-run_url] <String>]
+    
+    cmd parameter is required, it can be provided from pipeline
+    
+    Defaults:
+    $username = 'folaris'
+    $password = 'folaris'
+    $run_url = 'http://localhost:8080/run'
+
+    If you have changed the user/password on the server side and run on a different computer, you will need to run like this:
+    
+    Invoke-RemotePwsh  -cmd 'get-date' -run_url http://192.168.1.250:8080/run -username 'changed-user' -password 'chnaged-password'
+#>
+
 # example using pipeline: list files/direcories showing only short names
 'gci . |select -exp Name' | Invoke-RemotePwsh
 # example using parameter: Get-Date
@@ -142,7 +159,6 @@ f -cmd 'get-date' -run_url http://192.168.1.250:8080/run
 
 More details in [folaris-tests.ps1 ](folaris-tests.ps1)
 
-### to-do: add some type of authentication
 
 ### Thanks to
 
