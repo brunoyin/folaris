@@ -23,18 +23,18 @@ Folaris is based on [SUAVE: a simple web development F# library](https://github.
 * Folaris web app has an embedded Powershell that executes Powershell cmdlets as well as shell commands available on the hosting server
 * Powershell output is a dotnet object or PSDataCollection<PSObject> and Folaris serialize it and send it to client, the client uses the same to deserialize.
 
-### Warning: Folaris is not safe
+### Warning: Folaris is not very safe as it is
 
 * This is a proof of concept
-* It executes any commands without authentication
-* Run it in Docker with read-only volume mounting option
+* It executes any commands with simple basic authentication. It is possible to use a front proxy server with HTTPS to secure communication, adapt a secure authentication service.
+* Execute only commands that you already know
 
 ## Running from the source
 
-* dotnet core sdk 3.1 required
-* clone this repo
-* run: dotnet run
-* use folarisCli Powershell module to see it in action
+* dotnet core sdk 3.1 required to run from source and build, pusblish
+* Clone this repo
+* Change directory to source code root, and run: dotnet run
+* Use folarisCli Powershell module to see it in action
 ```powershell
 # use the default 8080, user/password = folaris/folaris
 dotnet run
