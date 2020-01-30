@@ -17,7 +17,7 @@ RUN dotnet publish -c Release -o out
 
 # Use Microsoft's official runtime .NET image.
 # https://hub.docker.com/_/microsoft-dotnet-core-runtime/
-FROM docker pull mcr.microsoft.com/dotnet/core/runtime:3.1 AS runtime
+FROM mcr.microsoft.com/dotnet/core/runtime:3.1 AS runtime
 WORKDIR /app
 COPY --from=build /app/out ./
 
