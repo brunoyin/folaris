@@ -6,10 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include=".gitignore" />
-    <None Include="README.md" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Logary.Adapters.Suave" Version="5.0.0" />
@@ -17,8 +17,9 @@
     <PackageReference Include="Suave" Version="2.5.6" />
   </ItemGroup>
 
+  <!--
   <ItemGroup>
-    <Folder Include="folaris-cli\" />
+    <Folder Include="folaris-cli/" />
   </ItemGroup>
-
+  -->
 </Project>

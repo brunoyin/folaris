@@ -1,0 +1,13 @@
+﻿apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: folaris
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+        - image: docker.io/brunoyin/folaris
+          env:
+            - name: folaris_version
+              value: "0.0.1"
