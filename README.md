@@ -56,7 +56,17 @@ dotnet run
 dotnet publish -c Release -r linux-x64 --no-self-contained  -o ./build
 ```
 
-### Running in Docker
+### Using published folaris Docker image
+
+```powershell
+# use FOLARIS_PORT variable to set your port, defaults to 8080
+docker run -d --name folaris -e FOLARIS_PORT=9876 -p 9876:9876 brunoyin/folaris
+
+# use folarisCli Powershell module
+
+```
+
+### Using dotnet runtime Docker image
 
 * docker pull mcr.microsoft.com/dotnet/core/runtime:3.1
 * Run in Docker
@@ -119,7 +129,7 @@ import-module ./folaris-cli/folarisCli.psd1 -Verbose
 help -full Invoke-RemotePwsh
 help -full  f
 # use Check-Folaris or its alias folaris
-help -full Check-Folaris
+help -full Get-Folaris
 help -full folaris
 ```
 * See it in action

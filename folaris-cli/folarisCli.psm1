@@ -43,7 +43,7 @@ Function Invoke-RemotePwsh {
 	}	
 }
 
-Function Check-Folaris {
+Function Get-Folaris {
 	<#
 	.DESCRIPTION
 		Check if Folaris is running
@@ -57,12 +57,12 @@ Function Check-Folaris {
 	)
 	$ErrorActionPreference = 'Stop'
 	try {
-		Invoke-RestMethod -Uri http://localhost:8080/ -UseBasicParsing
+		Invoke-RestMethod -Uri $folaris_url -UseBasicParsing
 	}catch {
 		Write-Host $($_|fl * -Force |Out-String)
 	}
 }
 
 # Aliases
-New-Alias -Name folaris -Value Check-Folaris
+New-Alias -Name folaris -Value Get-Folaris
 New-Alias -Name f -Value Invoke-RemotePwsh
