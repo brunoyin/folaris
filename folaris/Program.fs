@@ -19,9 +19,11 @@ open Logary.Configuration
 //
 open Newtonsoft.Json
 open Newtonsoft.Json.Converters
+open Newtonsoft.Json.Linq
 //
 open System.Management.Automation
 open System.Management.Automation.Runspaces
+open Microsoft.PowerShell
 
 let folarisVersion = "0.0.1"
 
@@ -38,7 +40,45 @@ type PwshResult =
         status: bool
         timeUsed: float
         timeBegin: DateTime
+        info: PSDataCollection<InformationRecord>
     }
+
+type PwshResultConverter() =
+    inherit JsonConverter() 
+    member x.WritePSObject(writer: JsonWriter, text: String) =
+        let token = JToken.FromObject(text)
+        token.WriteTo(writer)
+
+    override x.WriteJson(writer: JsonWriter, value: obj, serializer: JsonSerializer) =
+        match value with
+        | :? PwshResult -> 
+            let result: PwshResult = unbox<PwshResult> value
+            writer.WriteStartObject()
+            writer.WritePropertyName("cmd")
+            serializer.Serialize(writer, result.cmd)
+            writer.WritePropertyName("outstring")
+            serializer.Serialize(writer, result.outstring)
+            writer.WritePropertyName("status")
+            serializer.Serialize(writer, result.status)
+            writer.WritePropertyName("timeBegin")
+            serializer.Serialize(writer, result.timeBegin)
+            writer.WritePropertyName("timeUsed")
+            serializer.Serialize(writer, result.timeUsed)
+            writer.WritePropertyName("output")
+            serializer.Serialize(writer, (PSSerializer.Serialize(result.output)))
+            writer.WritePropertyName("info")
+            serializer.Serialize(writer,(PSSerializer.Serialize(result.info)))
+            writer.WriteEndObject();
+        //| :? PSDataCollection<InformationRecord> -> x.WritePSObject(writer, (PSSerializer.Serialize(value)) )
+        | _ -> 
+            let token = JToken.FromObject(value)
+            token.WriteTo(writer)
+
+    override x.CanRead
+        with get() = false
+    override x.ReadJson(_: JsonReader, _: Type, _: obj, _: JsonSerializer) : obj = 
+        raise (new NotImplementedException())
+    override x.CanConvert(objectType: Type) : bool = true
 
 type PwshExecution =
     | SuccessResult of PwshResult
@@ -86,6 +126,7 @@ let uniqueFile filePath =
 let sessionState = InitialSessionState.CreateDefault()
 SessionStateVariableEntry("folaris_version",folarisVersion, "Folaris version in every powershell session in $folaris_version variable") |> sessionState.Variables.Add
 SessionStateVariableEntry("ErrorActionPreference","Stop", "Making sure execution stop on error") |> sessionState.Variables.Add
+sessionState.ExecutionPolicy <- ExecutionPolicy.Unrestricted
 // create a RunspacePool to speed up execution
 let runSpacePool = RunspaceFactory.CreateRunspacePool(sessionState)
 runSpacePool.SetMinRunspaces(1) |>ignore
@@ -106,7 +147,8 @@ let fromJson<'a> json =
     JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a
 
 let toJson psobject =
-    JsonConvert.SerializeObject(psobject, jsonSettings)
+    let psconverter =  (new PwshResultConverter() :> JsonConverter) 
+    JsonConvert.SerializeObject(psobject, psconverter)
 
 // To-do: needs improvement
 let fromPSobject (psObject: PSObject): string =
@@ -130,7 +172,7 @@ let executeCmd (cmd: PwshCommand) =
         // concatenate output object/string with new line
         logger.info(eventX (sprintf "Done executing: %s " cmd.cmd) )
         let ts = (DateTime.Now - t1).TotalSeconds
-        return { cmd = cmd.cmd; output=ret; outstring=outString; status=true; timeUsed=ts; timeBegin = t1; }
+        return { cmd = cmd.cmd; output=ret; outstring=outString; status=true; timeUsed=ts; timeBegin = t1; info=pwsh.Streams.Information }
     } |> Async.Catch
    
 // safe size up to 3K, reject long script size and must match type PwshCommand
@@ -158,7 +200,7 @@ let runPwsh =
             |> executeCmd |> Async.RunSynchronously
         (match result with
         | Choice1Of2 psReturn -> psReturn
-        | Choice2Of2 ex -> { cmd =""; output=null; outstring=(sprintf "Error: %s\nStackTrace: %s" ex.Message ex.StackTrace); status=false; timeUsed=( DateTime.Now - t1).TotalSeconds; timeBegin = t1; }
+        | Choice2Of2 ex -> { cmd =""; output=null; outstring=(sprintf "Error: %s\nStackTrace: %s" ex.Message ex.StackTrace); status=false; timeUsed=( DateTime.Now - t1).TotalSeconds; timeBegin = t1; info=null}
         )
         |> toJson
         |> OK )
