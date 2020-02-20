@@ -1,0 +1,7 @@
+﻿bin/
+obj/
+build/
+upload/
+folaris_upload/
+.vs
+TestResults/
