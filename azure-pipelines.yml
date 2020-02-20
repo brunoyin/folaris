@@ -25,6 +25,6 @@ stages:
         containerRegistry: 'dockerhub'
         repository: 'brunoyin/folaris'
         command: 'buildAndPush'
-        Dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        Dockerfile: '$(Build.SourcesDirectory)/folaris/Dockerfile'
         tags: |
           $(tag)
