@@ -1,5 +1,16 @@
 module Tests
 
+(*
+To run tests, 
+
+1. Start up folaris: go to folaris project folder, and run: 
+    dotnet net
+2. Go to this project, and run:
+    dotnet test --logger "trx;LogFileName=TestResults.trx"
+
+*)
+
+
 open System
 open Xunit
 open Xunit.Abstractions
@@ -24,13 +35,14 @@ let GetEnvVar varName defaultValue =
 // set password
 let folarisUsername = GetEnvVar "FOLARIS_USER" "folaris"
 let folarisPasswd = GetEnvVar "FOLARIS_PASSWD" "folaris"
+let headers = [BasicAuth folarisUsername folarisPasswd; Accept HttpContentTypes.Json]
 
 let runTest (psCommand: PwshCommand) (output:ITestOutputHelper) : HttpResponse =
     let payload = JsonConvert.SerializeObject psCommand
-    let result = Http.Request(url = "http://localhost:8080/run", httpMethod=HttpMethod.Post, body = (TextRequest payload), headers=[BasicAuth folarisUsername folarisPasswd; Accept HttpContentTypes.Json] )
+    let result = Http.Request(url = "http://localhost:8080/run", httpMethod=HttpMethod.Post, body = (TextRequest payload), headers=headers )
     match result.Body with
     | Text text -> output.WriteLine("reply: {0}",  text)
-    | _ -> output.WriteLine("Unexpected: We are expecting text")
+    | _ -> output.WriteLine("Unexpected Error: We are expecting text")
     result
 
 type FolarisTest(output:ITestOutputHelper) =
