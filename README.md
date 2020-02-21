@@ -166,8 +166,11 @@ f -cmd 'get-date' -run_url http://192.168.1.250:8080/run
 # Let's produce and error: assume dude is not a valid command
 'Get-Command dude' |f -run_url http://192.168.1.250:8080/run
 ```
+### Testing
 
-More details in [folaris-tests.ps1 ](folaris-tests.ps1)
+* Check [xunit tests](folaris-test)
+* More details in [folaris-tests.ps1 ](folaris-tests.ps1)
+* Simplistic performance tests: [concurrent tests using Powershell Workflow](folaris/simple-perf-test.ps1)
 
 
 ### Thanks to
