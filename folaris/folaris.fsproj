@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="simple-perf-test.ps1" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
