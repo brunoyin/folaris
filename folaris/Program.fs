@@ -1,6 +1,7 @@
 ﻿open System
 open System.IO
 open System.Text.RegularExpressions
+open System.Runtime.InteropServices
 //
 open Suave
 open Suave.Filters
@@ -126,7 +127,8 @@ let uniqueFile filePath =
 let sessionState = InitialSessionState.CreateDefault()
 SessionStateVariableEntry("folaris_version",folarisVersion, "Folaris version in every powershell session in $folaris_version variable") |> sessionState.Variables.Add
 SessionStateVariableEntry("ErrorActionPreference","Stop", "Making sure execution stop on error") |> sessionState.Variables.Add
-sessionState.ExecutionPolicy <- ExecutionPolicy.Unrestricted
+if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ) then
+    sessionState.ExecutionPolicy <- ExecutionPolicy.Unrestricted
 // create a RunspacePool to speed up execution
 let runSpacePool = RunspaceFactory.CreateRunspacePool(sessionState)
 runSpacePool.SetMinRunspaces(1) |>ignore
