@@ -1,6 +1,8 @@
 ﻿
 ## Folaris
 
+[![Build Status](https://dev.azure.com/bruno0023/bruno/_apis/build/status/brunoyin.folaris?branchName=master)](https://dev.azure.com/bruno0023/bruno/_build/latest?definitionId=1&branchName=master)
+
 Folaris is a simple web app with an embedded Powershell and functions just like WinRM without Windows integrated authentication. It allows you to run it on any servers where you can host a dotnet core app.
 
 It's experimental, not for use in production. I recommend running it in Docker first.
